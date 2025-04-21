@@ -3,7 +3,11 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
     CartesianGrid, Legend
 } from "recharts";
-import { FaFilter } from "react-icons/fa";
+import { FaFilter, FaDollarSign } from "react-icons/fa";
+import { BiLineChart } from "react-icons/bi";
+import { toast } from "react-toastify";
+import MESSAGES from "../../common/const";
+
 const CustomTooltip = ({ active, payload, label, chartType }) => {
     if (active && payload && payload.length) {
         const data = payload[0].payload;
@@ -36,6 +40,9 @@ const CustomTooltip = ({ active, payload, label, chartType }) => {
     return null;
 };
 
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('vi-VN').format(value) + " đ";
+};
 
 const renderXAxisTick = (props) => {
     const { x, y, payload } = props;
@@ -71,6 +78,8 @@ const Chart = ({
     const [data, setData] = useState([]);
     const [localLoading, setLocalLoading] = useState(true);
     const [localError, setLocalError] = useState(null);
+    const [totalRevenue, setTotalRevenue] = useState(0);
+    const [totalOrders, setTotalOrders] = useState(0);
 
     const [limit, setLimit] = useState(initialLimit);
 
@@ -79,6 +88,19 @@ const Chart = ({
 
     const [startDayInput, setStartDayInput] = useState(null);
     const [endDayInput, setEndDayInput] = useState(null);
+
+    const handleFilter = () => {
+        const start = new Date(startDayInput);
+        const end = new Date(endDayInput);
+
+        if (start > end) {
+            toast.error(MESSAGES.START_DATE_AFTER_END_DATE_ERROR);
+            return;
+        }
+
+        setStartDay(startDayInput);
+        setEndDay(endDayInput);
+    };
 
     useEffect(() => {
         const today = new Date();
@@ -102,8 +124,15 @@ const Chart = ({
                     setLocalLoading(true);
                     const res = await apiFetcher({ limit, startDay, endDay });
                     setData(res?.items || []);
+
+                    if (chartType === "revenue" && res?.items?.length) {
+                        const total = res.items.reduce((sum, item) => sum + (item[dataKey] || 0), 0);
+                        setTotalRevenue(total);
+
+                        const orderCount = res.items.reduce((sum, item) => sum + (item.totalOrder || 0), 0);
+                        setTotalOrders(orderCount);
+                    }
                 } catch (err) {
-                    console.error("Error fetching data:", err);
                     setLocalError(err.message);
                 } finally {
                     setLocalLoading(false);
@@ -111,7 +140,7 @@ const Chart = ({
             };
             fetch();
         }
-    }, [limit, startDay, endDay, apiFetcher]);
+    }, [limit, startDay, endDay, apiFetcher, chartType, dataKey]);
 
     if (localLoading) return (
         <div className="w-full h-[480px] flex items-center justify-center">
@@ -128,8 +157,7 @@ const Chart = ({
     );
 
     return (
-        <div className="w-full h-[480px] px-4 py-2 bg-white rounded-xl shadow-sm">
-
+        <div className="w-full px-4 py-2 bg-white rounded-xl shadow-sm">
             <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">{title}</h3>
                 <div className="flex gap-4 items-center">
@@ -170,15 +198,13 @@ const Chart = ({
                         className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                     />
                     <button
-                        onClick={() => {
-                            setStartDay(startDayInput);
-                            setEndDay(endDayInput);
-                        }}
+                        onClick={handleFilter}
                         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all"
                     >
                         <FaFilter className="text-lg" />
                         <span>Lọc</span>
                     </button>
+
                 </div>
             </div>
 
@@ -229,6 +255,42 @@ const Chart = ({
                     </BarChart>
                 </ResponsiveContainer>
             </div>
+
+            {chartType === "revenue" && (
+                <div className="mt-4 mb-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="flex flex-col items-center justify-center border-r border-indigo-100 p-2">
+                            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full mb-3">
+                                <BiLineChart className="text-white text-xl" />
+                            </div>
+                            <p className="text-gray-600 font-medium text-sm">Thời gian</p>
+                            <p className="text-indigo-700 font-bold">
+                                {new Date(startDay).toLocaleDateString('vi-VN')} - {new Date(endDay).toLocaleDateString('vi-VN')}
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center border-r border-indigo-100 p-2">
+                            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-full mb-3">
+                                <FaFilter className="text-white text-lg" />
+                            </div>
+                            <p className="text-gray-600 font-medium text-sm">Tổng đơn hàng</p>
+                            <p className="text-green-600 font-bold text-xl">
+                                {new Intl.NumberFormat('vi-VN').format(totalOrders)}
+                            </p>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center p-2">
+                            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mb-3">
+                                <FaDollarSign className="text-white text-lg" />
+                            </div>
+                            <p className="text-gray-600 font-medium text-sm">Tổng doanh thu</p>
+                            <p className="text-purple-600 font-bold text-xl">
+                                {formatCurrency(totalRevenue)}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

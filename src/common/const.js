@@ -52,10 +52,13 @@ const MESSAGES = {
     GET_PRODUCT_LIST_ERROR: 'Lỗi khi lấy danh sách sản phẩm',
     GET_PRODUCT_DETAIL_ERROR: 'Lỗi khi lấy chi tiết sản phẩm',
 
+    // Statistics error message
+    START_DATE_AFTER_END_DATE_ERROR :"Ngày bắt đầu không được lớn hơn ngày kết thúc!",
     // VALLIDATION MESSAGE
     VALIDATION: {
         productCode: "Vui lòng nhập mã sản phẩm",
         productName: "Vui lòng nhập tên sản phẩm",
+
         quantity: {
             required: "Vui lòng nhập số lượng",
             type: "Số lượng phải là số",
