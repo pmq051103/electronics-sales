@@ -9,7 +9,14 @@ import Pagination from "../../../components/admin/Pagination";
 import DataTable from "../../../components/admin/DataTable";
 import FilterBar from "../../../components/admin/FilterBar";
 import { CONST } from "../../../common/const";
-import OrderUpdateStatus from "./OrderUpdateStatus";
+import {
+    OrderStatus,
+    OrderStatusOptions,
+    PaymentMethods,
+    PaymentMethodOptions,
+    DeliveryMethods,
+    DeliveryMethodOptions
+} from "../../../common/enum";
 
 const OrderList = () => {
     const navigate = useNavigate();
@@ -20,37 +27,19 @@ const OrderList = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({ status: "", transaction: "", delivery: "" });
-    const [selectedOder, setSelectedOrder] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [refresh, setRefresh] = useState(false);
+
     const searchTerm = searchParams.get("search") || "";
     const page = parseInt(searchParams.get("page")) || 1;
 
-    const statusOptions = [
-        { id: "PENDING", name: "Đang chờ" },
-        { id: "SHIPPING", name: "Đang giao" },
-        { id: "COMPLETED", name: "Hoàn thành" },
-        { id: "CANCELED", name: "Đã hủy" }
-    ];
-
-    const paymentMethodOptions = [
-        { id: "COD", name: "COD" },
-        { id: "MOMO", name: "MoMo E-Wallet" },
-        { id: "ZALOPAY", name: "ZaloPay E-Wallet" }
-    ];
-
-    const deliveryOptions = [
-        { id: "STANDARD", name: "Standard" },
-        { id: "VIETTEL_POST", name: "Viettel Post" },
-        { id: "FAST_DELIVERY", name: "Giao hàng nhanh" },
-        { id: "JT_EXPRESS", name: "J&T Express" }
-    ];
+    const statusOptions = OrderStatusOptions;
+    const paymentMethodOptions = PaymentMethodOptions;
+    const deliveryOptions = DeliveryMethodOptions;
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             setError(null);
-            
+
             try {
                 const { status, transaction, delivery } = filters;
                 const filtersForAPI = {
@@ -58,7 +47,7 @@ const OrderList = () => {
                     transaction,
                     delivery
                 };
-                
+
                 const response = await dispatch(
                     fetchOrders({ search: searchTerm, page, ...filtersForAPI })
                 ).unwrap();
@@ -76,7 +65,7 @@ const OrderList = () => {
         };
 
         fetchData();
-    }, [dispatch, searchTerm, page, filters, searchParams,refresh]);
+    }, [dispatch, searchTerm, page, filters, searchParams]);
 
     useEffect(() => {
         const params = Object.fromEntries(searchParams);
@@ -101,15 +90,7 @@ const OrderList = () => {
             return { ...Object.fromEntries(prev), page: newPage };
         });
     };
-    const handleIsOpenModal = (order) =>{
-        setIsModalOpen(true);
-        setSelectedOrder(order);
-    }
 
-    const handleIsCloseModal = () =>{
-        setIsModalOpen(false);
-        setRefresh(!refresh);
-    }
     const handleFilterChange = (newFilters) => {
         setFilters(newFilters);
 
@@ -140,12 +121,12 @@ const OrderList = () => {
 
     const getStatusLabel = (status) => {
         const statusMap = {
-            "PENDING": { label: "Đang chờ", className: "bg-gray-100 text-gray-800" },
-            "SHIPPING": { label: "Đang giao", className: "bg-blue-100 text-blue-600" },
-            "COMPLETED": { label: "Hoàn thành", className: "bg-green-100 text-green-600" },
-            "CANCELED": { label: "Đã hủy", className: "bg-red-100 text-red-600" }
+            [OrderStatus.PENDING]: { label: "Đang chờ", className: "bg-gray-100 text-gray-800" },
+            [OrderStatus.SHIPPING]: { label: "Đang giao", className: "bg-blue-100 text-blue-600" },
+            [OrderStatus.COMPLETED]: { label: "Hoàn thành", className: "bg-green-100 text-green-600" },
+            [OrderStatus.CANCELED]: { label: "Đã hủy", className: "bg-red-100 text-red-600" }
         };
-
+    
         const statusInfo = statusMap[status] || { label: status, className: "bg-gray-100 text-gray-800" };
         
         return (
@@ -154,25 +135,25 @@ const OrderList = () => {
             </span>
         );
     };
-
+    
     const getDeliveryLabel = (delivery) => {
         const deliveryMap = {
-            "STANDARD": "Standard",
-            "VIETTEL_POST": "Viettel Post",
-            "FAST_DELIVERY": "Giao hàng nhanh",
-            "JT_EXPRESS": "J&T Express"
+            [DeliveryMethods.STANDARD]: "Standard",
+            [DeliveryMethods.VIETTEL_POST]: "Viettel Post",
+            [DeliveryMethods.FAST_DELIVERY]: "Giao hàng nhanh",
+            [DeliveryMethods.JT_EXPRESS]: "J&T Express"
         };
-
+    
         return deliveryMap[delivery] || delivery;
     };
-
+    
     const getPaymentMethodLabel = (paymentMethod) => {
         const paymentMap = {
-            "COD": "COD",
-            "MOMO": "MoMo E-Wallet",
-            "ZALOPAY": "ZaloPay E-Wallet"
+            [PaymentMethods.COD]: "COD",
+            [PaymentMethods.MOMO]: "MoMo E-Wallet",
+            [PaymentMethods.ZALOPAY]: "ZaloPay E-Wallet"
         };
-
+    
         return paymentMap[paymentMethod] || paymentMethod;
     };
 
@@ -216,24 +197,24 @@ const OrderList = () => {
             accessor: "delivery",
             render: (order) => getDeliveryLabel(order.delivery),
         },
-        
+
         {
             header: "Hành động",
             render: (order) => (
                 <div className="flex gap-2">
-                    <button 
+                    <button
                         className="text-indigo-600 text-lg hover:scale-110 transition mr-3"
                         onClick={() => navigate(`/admin/orderDetail/${order.id}`)}
                     >
                         <FaEye />
                     </button>
-                    <button 
+                    <button
                         className="text-yellow-500 text-lg hover:scale-110 transition mr-3"
-                        onClick={() => handleIsOpenModal(order)}
+                        onClick={() => navigate(`/admin/orderUpdate/${order.id}`)}
                     >
                         <MdOutlineModeEdit />
                     </button>
-                  
+
                 </div>
             ),
         },
@@ -260,7 +241,7 @@ const OrderList = () => {
                             className="w-full"
                         />
                     </div>
-                </div>               
+                </div>
             </div>
 
             {loading && <p className="text-center text-gray-600 mt-1">Đang tải dữ liệu...</p>}
@@ -274,7 +255,6 @@ const OrderList = () => {
                 page={page}
                 onPageChange={handlePageChange}
             />
-            <OrderUpdateStatus isOpen={isModalOpen} onClose={handleIsCloseModal} order={selectedOder} />
         </div>
     );
 };

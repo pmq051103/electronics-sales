@@ -31,3 +31,17 @@ export const updateOrderStatus = createAsyncThunk(
     }
   }
 );
+export const fetchOrderById = createAsyncThunk(
+  "order/fetchOrders",
+  async ( id , { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(setLoading(true));
+      const response = await OrderService.fetchOrderById(id);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data.message);
+    }finally{
+      dispatch(setLoading(false));
+    }
+  }
+);

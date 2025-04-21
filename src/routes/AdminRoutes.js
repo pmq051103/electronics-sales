@@ -12,6 +12,7 @@ import ProductDetail from "../pages/admin/product/ProductDetail";
 import ProductAdd from "../pages/admin/product/ProductAdd";
 import ProductUpdate from "../pages/admin/product/ProductUpdate";
 import OrderList from "../pages/admin/order/OrderList";
+import OrderDetail from "../pages/admin/order/OrderDetail";
 
 const AdminRoutes = () => {
   return (
@@ -27,6 +28,7 @@ const AdminRoutes = () => {
           <Route path="productAdd" element={<ProductAdd/>}/>
           <Route path="productUpdate/:id" element={<ProductUpdate/>}/>
           <Route path="OrderList" element={<OrderList/>}/>
+          <Route path="orderDetail/:id" element={<OrderDetail/>}/>
         </Route>
         <Route path="*" element={<PageNotFound />} />
       </Routes>

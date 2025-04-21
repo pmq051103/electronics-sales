@@ -2,6 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { fetchOrderById } from "../../../app/redux/slices/order.slice";
+import { toast } from "react-toastify";
+import {
+    OrderStatus,
+    OrderStatusOptions,
+    PaymentMethodOptions,
+    DeliveryMethodOptions
+} from "../../../common/enum";
 
 const OrderDetail = () => {
     const navigate = useNavigate();
@@ -9,7 +16,6 @@ const OrderDetail = () => {
     const dispatch = useDispatch();
 
     const [order, setOrder] = useState(null);
-    const [error, setError] = useState("");
 
     useEffect(() => {
         const fetchData = async () => {
@@ -17,8 +23,7 @@ const OrderDetail = () => {
                 const data = await dispatch(fetchOrderById(id)).unwrap();
                 setOrder(data);
             } catch (err) {
-                console.error("Lỗi khi fetch đơn hàng:", err);
-                setError("Không tìm thấy đơn hàng hoặc có lỗi xảy ra.");
+                toast.error(err);
             }
         };
 
@@ -26,40 +31,31 @@ const OrderDetail = () => {
     }, [id, dispatch]);
 
     const getStatusLabel = (status) => {
-        const statusMap = {
-            "PENDING": { label: "Đang chờ", className: "bg-gray-100 text-gray-800" },
-            "SHIPPING": { label: "Đang giao", className: "bg-blue-100 text-blue-600" },
-            "COMPLETED": { label: "Hoàn thành", className: "bg-green-100 text-green-600" },
-            "CANCELED": { label: "Đã hủy", className: "bg-red-100 text-red-600" }
-        };
-    
-        const { label, className } = statusMap[status] || { label: status, className: "bg-gray-100 text-gray-800" };
-        return <span className={`px-2 py-1 rounded-md ${className}`}>{label}</span>;
-    };
-
-    const getPaymentMethodLabel = (paymentMethod) => {
-        const paymentMap = {
-            COD: "COD",
-            MOMO: "MoMo E-Wallet",
-            ZALOPAY: "ZaloPay E-Wallet"
+        const statusClassMap = {
+            [OrderStatus.PENDING]: "bg-gray-100 text-gray-800",
+            [OrderStatus.SHIPPING]: "bg-blue-100 text-blue-600",
+            [OrderStatus.COMPLETED]: "bg-green-100 text-green-600",
+            [OrderStatus.CANCELED]: "bg-red-100 text-red-600"
         };
 
-        return paymentMap[paymentMethod] || paymentMethod;
+        const statusOption = OrderStatusOptions.find(opt => opt.id === status);
+        const className = statusClassMap[status];
+
+        return <span className={`px-2 py-1 rounded-md ${className}`}>{statusOption.name}</span>;
     };
 
-    const getDeliveryLabel = (delivery) => {
-        const deliveryMap = {
-            "STANDARD": "Standard",
-            "VIETTEL_POST": "Viettel Post",
-            "FAST_DELIVERY": "Giao hàng nhanh",
-            "JT_EXPRESS": "J&T Express"
-        };
-
-        return deliveryMap[delivery] || delivery;
+    const getPaymentMethodLabel = (method) => {
+        const methodOption = PaymentMethodOptions.find(opt => opt.id === method);
+        return methodOption.name;
     };
-    if (error) return <div className="text-red-500">{error}</div>;
+
+    const getDeliveryLabel = (method) => {
+        const deliveryOption = DeliveryMethodOptions.find(opt => opt.id === method);
+        return deliveryOption.name;
+    };
+
     if (!order) return <div>Đang tải đơn hàng...</div>;
-    
+
     const {
         orderCode,
         phoneNumber,
@@ -73,7 +69,7 @@ const OrderDetail = () => {
     
     return (
         <div className="mt-4">
-            <h2 className="text-l text-indigo-600 font-bold">Đơn hàng</h2>
+           <h2 className="text-2xl text-indigo-600 font-bold mb-2">Đơn hàng</h2>
             <div className="p-6 bg-white rounded-md shadow-md max-w mt-4 border border-gray-200">
                 <div className="text-sm text-gray-800 space-y-3 mb-6">
                     <h3 className="font-bold mb-2 text-l">Thông tin đơn hàng</h3>

@@ -8,8 +8,8 @@ const OrderService = {
         
         return SysFetch.get(`api/orders`, { params });
     },
-    patchOrder : (id,data) => SysFetch.patch(`api/orders?id=${id}`,data)
-
+    patchOrder : (id,data) => SysFetch.patch(`api/orders?id=${id}`,data),
+    fetchOrderById:(id) => SysFetch.get(`api/orders/details?id=${id}`),
 
 }
 
